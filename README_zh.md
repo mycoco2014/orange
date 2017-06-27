@@ -16,12 +16,30 @@ Orange是一个基于OpenResty的API网关。除Nginx的基本功能外，它还
 
 #### 安装依赖
 
-- OpenResty: 版本应在1.9.7.3+
+- OpenResty(https://github.com/openresty/openresty): 版本应在1.9.7.3+
     - Orange的监控插件需要统计http的某些状态数据，所以需要编译OpenResty时添加`--with-http_stub_status_module`
     - 由于使用了*_block指令，所以OpenResty的版本最好在1.9.7.3以上.
+    - 以下为 centos
+    -  `yum install hg -y`
+    -  `yum install gcc -y`
+    -  `yum install pcre pcre-devel -y`
+    -  `yum install openssl openssl-devel -y`
+    -  然后在在 /path/to/openresty-1.11.2.3 目录里面进行make
+    -      `会自动下载其它nginx依赖的包,以及会调整当前目录下[openresty-1.11.2.3]`
+    -  cd openresty-1.11.2.3
+    -  configure --with-http_stub_status_module
+    -  然后sudo make && make install 
+    -   `ln -s /usr/local/openresty/bin/openresty /usr/bin/openresty`
+    -   `ln -s /usr/local/openresty/bin/resty /usr/bin/resty`
 - [lor](https://github.com/sumory/lor)框架
     - 若使用的Orange版本低于v0.6.2则应安装lor v0.2.*版本
     - 若使用的Orange版本高于或等于v0.6.2则应安装lor v0.3.0+版本
+- lua-resty-template (https://github.com/bungle/lua-resty-template.git)
+    - 依赖模板库
+    - 需要将lua-resty-template/lib/resty/ 复制到安装好的 openresty 的目录
+    -  默认为`/usr/local/openresty/lualib/resty`
+    -  
+    
 - MySQL
     - 配置存储和集群扩展需要MySQL支持。从0.2.0版本开始，Orange去除了本地文件存储的方式，目前仅提供MySQL存储支持.
 
@@ -29,6 +47,10 @@ Orange是一个基于OpenResty的API网关。除Nginx的基本功能外，它还
 
 - 在MySQL中创建数据库，名为orange
 - 将与当前代码版本配套的SQL脚本(如install/orange-v0.6.4.sql)导入到orange库中
+- mysql -u root 
+- `> create database orange;`
+- `> use orange;`
+- `> sources /path/to/install/orange-v0.6.4.sql;`
 
 #### 修改配置文件
 
@@ -61,7 +83,7 @@ orange.conf的配置如下，请按需修改:
             "port": 3306,
             "database": "orange",
             "user": "root",
-            "password": "",
+            "password": "", //database password
             "max_packet_size": 1048576
         },
         "pool_config": {
