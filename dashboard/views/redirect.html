@@ -205,6 +205,7 @@
                     </div>
                     <div class="col-sm-3">
                         <select class="form-control" id="rule-handle-redirect-status">
+                            <option value="200">200</option>
                             <option value="301">301</option>
                             <option value="302">302</option>
                         </select>
@@ -268,6 +269,7 @@
                     </div>
                     <div class="col-sm-3">
                         <select class="form-control" id="rule-handle-redirect-status">
+                            <option value="200" {@if r.handle.redirect_status=="200"} selected {@/if}>200</option>
                             <option value="301" {@if r.handle.redirect_status=="301"} selected {@/if}>301</option>
                             <option value="302" {@if r.handle.redirect_status=="302"} selected {@/if}>302</option>
                         </select>

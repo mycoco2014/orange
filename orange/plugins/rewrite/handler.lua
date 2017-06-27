@@ -31,10 +31,7 @@ local function filter_rules(sid, plugin, ngx_var_uri)
                 local handle = rule.handle
                 if handle and handle.uri_tmpl then
                     local to_redirect_org = handle_util.build_uri(rule.extractor.type, handle.uri_tmpl, variables)
-                    
-                    -- 对to_redirect 可能存在特别的unicode,比如&#47;是/的编码
-                    -- 2017-06-27
-                    to_redirect = string.gsub(to_redirect_org, "&#47;", "/")
+                
                     
                     if to_rewrite and to_rewrite ~= ngx_var_uri then
                         if handle.log == true then

@@ -28,15 +28,10 @@ local function filter_rules(sid, plugin, ngx_var_uri, ngx_var_host, ngx_var_sche
                 if handle and handle.url_tmpl then
                     local to_redirect = handle_util.build_url(rule.extractor.type, handle.url_tmpl, variables)
                     if to_redirect and to_redirect ~= ngx_var_uri then
-                        local redirect_status = tonumber(handle.redirect_status)
-                        if redirect_status ~= 301 and redirect_status ~= 302 then
-                            redirect_status = 301
-                        end
 
                         if string_find(to_redirect, 'http') ~= 1 then
                             to_redirect = ngx_var_scheme .. "://" .. ngx_var_host .. to_redirect
                         end
-
                         if ngx_var_args ~= nil then
                             if string_find(to_redirect, '?') then -- 不存在?，直接缀上url args
                                 if handle.trim_qs ~= true then
@@ -49,11 +44,20 @@ local function filter_rules(sid, plugin, ngx_var_uri, ngx_var_host, ngx_var_sche
                             end
                         end
 
-                        if handle.log == true then
-                            ngx.log(ngx.ERR, "[Redirect] ", ngx_var_uri, " to:", to_redirect)
+                        local redirect_status = tonumber(handle.redirect_status)
+                        if redirect_status ~= 200 then
+                            -- redirect
+                            if redirect_status ~= 301 and redirect_status ~= 302 then
+                                redirect_status = 301
+                            end
+                            if handle.log == true then
+                                ngx.log(ngx.ERR, "[Redirect] ", ngx_var_uri, " to:", to_redirect)
+                            end
+                            ngx_redirect(to_redirect, redirect_status)
+                        else 
+                            -- 
+                            ngx.var.upstream_url = to_redirect
                         end
-
-                        ngx_redirect(to_redirect, redirect_status)
                     end
                 end
 

@@ -7,10 +7,20 @@ template.print = function(s)
   return s
 end
 
+local function replace_bad_character(str)
+    if type(str) == "string" then
+        local tmp = string.gsub(str, "&#47;", "/")
+        return tmp
+    else
+        return str
+    end
+end
+
+
 local function compose(extractor_type, tmpl, variables)
     if not tmpl then return "" end
     if not variables or type(variables) ~= "table" then
-        return tmpl
+        return replace_bad_character(tmpl)
     end
 
     if not extractor_type or extractor_type == 1 then
@@ -23,9 +33,9 @@ local function compose(extractor_type, tmpl, variables)
             return variables[tonumber(m)]
         end)
 
-        return result
+        return replace_bad_character(result)
     elseif extractor_type == 2 then
-        return template.render(tmpl, variables, ngx_md5(tmpl), true)
+        return replace_bad_character(template.render(tmpl, variables, ngx_md5(tmpl), true))
     end
 end
 

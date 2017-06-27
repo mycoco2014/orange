@@ -98,7 +98,8 @@
             }
             handle.url_tmpl = url_tmpl;
             handle.trim_qs = ($("#rule-handle-trim-qs").val() === "true");
-            handle.redirect_status = $("#rule-handle-redirect-status").val() == "301"?"301":"302";
+            // handle.redirect_status = $("#rule-handle-redirect-status").val() == "301"?"301":"302";
+            handle.redirect_status = $("#rule-handle-redirect-status").val();
             handle.log = ($("#rule-handle-log").val() === "true");
             result.success = true;
             result.handle = handle;
