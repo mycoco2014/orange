@@ -136,6 +136,9 @@ Orange启动成功后， dashboard和API server也随之启动：
 - 内置的Dashboard可通过`http://localhost:9999`访问
 - API Server默认在`7777`端口监听，如不需要API Server可删除nginx.conf里对应的配置
 
+### 自定义
+  redirect功能
+  http status为200,则直接使用proxy_pass转发,不使用跳转
 
 ### 文档
 
