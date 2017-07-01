@@ -69,6 +69,13 @@ help    Show help tips
 
 Find more about Orange on its [website](http://orange.sumory.com/docs). There is only a Chinese version for now.
 
+### xxx1
+  redirect
+  add http status in 200,use proxy_pass
+
+### xxx2 
+  waf add freq control (./waf_up.png)
+
 
 ### Docker
 
