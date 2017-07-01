@@ -4,6 +4,13 @@
     {(common/meta.html)}
 </head>
 
+<style type="text/css">
+    .width-label-x { padding-left: 0px; padding-right: 0px }
+    .content-x { display: inline-flex; }
+    .character-x { margin-top: 5px;width: 40px; }
+    .character-y { margin-top: 5px;width: 140px; }
+</style>
+
 <body class="fixed-sidebar full-height-layout gray-bg">
     <div id="wrapper">
         {(common/left_nav.html)}<!-- 左侧导航 -->
@@ -129,17 +136,58 @@
                 <!-- add - 条件编辑器模板 end -->
 
                 <div class="form-group handle-holder">
-                    <label class="col-sm-1 control-label">处理</label>
+                    <label class="col-sm-1 control-label width-label-x">来源标识</label>
+                    <div class="col-sm-6">
+                        <textarea class="form-control" id="rule-lambda"> tx = function() return ngx.var.remote_addr  end </textarea>
+                    </div>
+                </div>
+
+                <div class="form-group handle-holder">
+                    <label class="col-sm-1 control-label width-label-x">聚合ID</label>
                     <div class="col-sm-3">
+                        <input type="text" class="form-control" id="rule-handle-id" value="" placeholder="分组标识">
+                    </div>
+                </div>
+                <div class="form-group handle-holder">
+                    <label class="col-sm-1 control-label width-label-x">时间粒度</label>
+                    <div class="col-sm-3 content-x">
+                        <span class="character-x">每</span>
+                        <input type="number" class="form-control" id="rule-handle-time-unit" value="" placeholder="每隔一段时间,可以放行">
+                        <span class="character-x">秒</span>
+                    </div>
+                    <label class="col-sm-1 control-label width-label-x">频次阈值</label>
+                    <div class="col-sm-5 content-x">
+                        <span class="character-x">大于</span>
+                        <div class="col-sm-5">
+                            <input type="number" class="form-control" id="rule-handle-frequency" value="" placeholder="过滤请求次数">
+                        </div>
+                        <span class="character-x">次</span>
+                    </div>
+                </div>
+
+                <div class="form-group handle-holder">
+                    <label class="col-sm-1 control-label">处理</label>
+                    <div class="col-sm-2">
                         <select class="form-control" id="rule-handle-perform">
                             <option value="deny">deny</option>
                             <option value="allow">allow</option>
                         </select>
                     </div>
-
-                    <div class="col-sm-2 handle-code-hodler">
-                        <input type="text" class="form-control" id="rule-handle-code" value="403" placeholder="error code">
+                    <div class="col-sm-14" id="failed-ctrl-code">
+                        <label class="col-sm-1 control-label width-label-x">状态码</label>
+                        <div class="col-sm-2 handle-code-hodler content-x">
+                            <input type="number" class="form-control" id="rule-handle-code" value="403" placeholder="error code">
+                        </div>
+                        <label class="col-sm-1 control-label">禁止</label>
+                        <div class="col-sm-2 handle-code-hodler content-x">
+                            <input type="text" class="form-control" id="rule-handle-min" value="" placeholder="deny min">
+                        </div>
+                        <span class="character-y">分钟访问</span>
                     </div>
+                </div>
+
+                <div class="form-group handle-holder">
+                    <label class="col-sm-1 control-label">日志</label>
                     <div class="col-sm-2">
                         <select class="form-control" id="rule-handle-log">
                             <option value="true">记录日志</option>
@@ -185,31 +233,78 @@
                 <!-- edit - 条件编辑器模板 end -->
 
                 <div class="form-group handle-holder">
-                    <label class="col-sm-1 control-label">处理</label>
+                    <label class="col-sm-1 control-label width-label-x">来源标识</label>
+                    <div class="col-sm-6">
+                        <textarea class="form-control" id="rule-lambda">${r.handle.rule_lambda}</textarea>
+                    </div>
+                </div>
+
+                <div class="form-group handle-holder">
+                    <label class="col-sm-1 control-label width-label-x">聚合ID</label>
                     <div class="col-sm-3">
+                        <input type="text" class="form-control" id="rule-handle-id" 
+                            placeholder="" value="${r.handle.rule_id}">
+                    </div>
+                </div>
+
+                <div class="form-group handle-holder">
+                    <label class="col-sm-1 control-label width-label-x">时间粒度</label>
+                    <div class="col-sm-3 content-x">
+                        <span class="character-x">每</span>
+                        <input type="number" class="form-control" id="rule-handle-time-unit" placeholder="每隔一段时间,可以放行"
+                            value="${r.handle.rule_time_unit}">
+                        <span class="character-x">秒</span>
+                    </div>
+                    <label class="col-sm-1 control-label width-label-x">频次阈值</label>
+                    <div class="col-sm-5 content-x">
+                        <span class="character-x">大于</span>
+                        <div class="col-sm-5">
+                            <input type="number" class="form-control" id="rule-handle-frequency" placeholder="过滤请求次数"
+                                value="${r.handle.rule_frequency}">
+                        </div>
+                        <span class="character-x">次</span>
+                    </div>
+                </div>
+
+                <div class="form-group handle-holder">
+                    <label class="col-sm-1 control-label">处理</label>
+                    <div class="col-sm-2">
                         <select class="form-control" id="rule-handle-perform">
                             <option value="deny" {@if r.handle.perform=="deny"} selected {@/if}>deny</option>
                             <option value="allow" {@if r.handle.perform=="allow"} selected {@/if}>allow</option>
                         </select>
                     </div>
-
-                    <div class="col-sm-2 handle-code-hodler" {@if r.handle.perform=="allow"} style="display:none;" {@/if} >
-                        <input type="text" class="form-control" id="rule-handle-code" placeholder="error code" value="${r.handle.code}">
+                    <div class="col-sm-14" id="failed-ctrl-code" {@if r.handle.perform=="allow"} style="display:none;" {@/if} >
+                        <label class="col-sm-1 control-label width-label-x">状态码</label>
+                        <div class="col-sm-2 handle-code-hodler content-x">
+                            <input type="number" class="form-control" id="rule-handle-code" placeholder="error code" 
+                                value="${r.handle.code}">
+                        </div>
+                        <label class="col-sm-1 control-label">禁止</label>
+                        <div class="col-sm-2 handle-code-hodler content-x">
+                            <input type="text" class="form-control" id="rule-handle-min" placeholder="deny min"
+                                value="${r.handle.forbidden_min}">
+                        </div>
+                        <span class="character-y">分钟访问</span>
                     </div>
+                </div>
 
+                <div class="form-group handle-holder">
+                    <label class="col-sm-1 control-label">日志</label>
                     <div class="col-sm-2">
                         <select class="form-control" id="rule-handle-log">
                             <option value="true" {@if r.handle.log==true} selected {@/if}>Log</option>
                             <option value="false" {@if r.handle.log==false} selected {@/if}>Not Log</option>
                         </select>
                     </div>
-
                     <div class="col-sm-2">
                         <select class="form-control" id="rule-handle-stat">
                             <option value="true" {@if r.handle.stat==true} selected {@/if}>Stat</option>
                             <option value="false" {@if r.handle.stat==false} selected {@/if}>Not Stat</option>
                         </select>
                     </div>
+                </div>
+
                 </div><!-- handle log-->
 
                 <div class="form-group">

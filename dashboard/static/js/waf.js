@@ -128,9 +128,12 @@
                 var handle_type = $(this).val();
 
                 if (handle_type == "allow") {
-                    $(this).parents(".handle-holder").find(".handle-code-hodler").hide();
+                    // 隐藏错误码以及请求时间
+                    $('#failed-ctrl-code').hide();
+                    // $(this).parents(".handle-holder").find(".handle-code-hodler").hide();
                 } else {
-                    $(this).parents(".handle-holder").find(".handle-code-hodler").show();
+                    $('#failed-ctrl-code').show();
+                    // $(this).parents(".handle-holder").find(".handle-code-hodler").show();
                 }
             });
         },
@@ -177,12 +180,47 @@
         buildHandle: function () {
             var result = {};
             var handle = {};
+
+            var rule_lambda = $("#rule-lambda").val();
+            if(!rule_lambda || rule_lambda.length < 5 ){
+                result.success = false;
+                result.data = "来源标识不能为空";
+                return result;
+            }
+            handle.rule_lambda = rule_lambda;
+
+            var rule_id = $("#rule-handle-id").val();
+            if( !rule_id || rule_id.length < 4) {
+                result.success = false;
+                result.data = "聚合ID不能为空";
+                return result;
+            }
+            handle.rule_id = rule_id;
+
+            var rule_time_unit = $("#rule-handle-time-unit").val();
+            if( !rule_time_unit || parseInt(rule_time_unit) < 1 ) {
+                result.success = false;
+                result.data = "时间粒度需要大于0";
+                return result;
+            }
+            handle.rule_time_unit = parseInt(rule_time_unit);
+
+            var rule_frequency = $("#rule-handle-frequency").val();
+            if( !rule_frequency || parseInt(rule_frequency) < 1 ) {
+                result.success = false;
+                result.data = "频次阈值需要大于0";
+                return result;
+            }
+            handle.rule_frequency = parseInt(rule_frequency);
+
+
             var handle_perform = $("#rule-handle-perform").val();
             if (handle_perform != "deny" && handle_perform != "allow") {
                 result.success = false;
                 result.data = "执行动作类型不合法，只能是deny或allow";
                 return result;
             }
+
             handle.perform = handle_perform;
 
             if (handle_perform == "deny") {
@@ -193,13 +231,24 @@
                     return result;
                 }
 
+                var forbidden_min = $("#rule-handle-min").val();
+                if( !forbidden_min ) {
+                    result.success = false;
+                    result.data = "执行deny的禁用时间不能为空";
+                    return result;
+                }
+
                 handle.code = parseInt(handle_code);
+                handle.forbidden_min = parseInt(forbidden_min);
             }
 
             handle.stat = ($("#rule-handle-stat").val() === "true");
             handle.log = ($("#rule-handle-log").val() === "true");
             result.success = true;
             result.handle = handle;
+
+            // alert(JSON.stringify(result));
+
             return result;
         },
     };
