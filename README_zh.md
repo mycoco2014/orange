@@ -42,6 +42,12 @@ Orange是一个基于OpenResty的API网关。除Nginx的基本功能外，它还
     
 - MySQL
     - 配置存储和集群扩展需要MySQL支持。从0.2.0版本开始，Orange去除了本地文件存储的方式，目前仅提供MySQL存储支持.
+- orange start 
+    - 默认启动的是nginx,如果本机已经安装了nginx则会出问题,找不到lua_package_path指令
+    vim /usr/local/orange/bin/utils/ngx_handle.lua
+    在31行默认的为local cmd = string.format("%snginx %s %s %s", orange_conf, prefix, ngx_conf, ngx_signal)
+    修改为local cmd = string.format("%sopenresty %s %s %s", orange_conf, prefix, ngx_conf, ngx_signal)
+    注意安装完openresty需要做ln -s链接,不然找不到
 
 #### 数据表导入MySQL
 
