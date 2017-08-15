@@ -27,7 +27,8 @@ local function ngx_command(args)
 
 
     -- local cmd = string.format("nginx %s %s %s %s", orange_conf, prefix, ngx_conf, ngx_signal)
-    local cmd = string.format("%snginx %s %s %s", orange_conf, prefix, ngx_conf, ngx_signal)
+    -- change to openresty
+    local cmd = string.format("%sopenresty %s %s %s", orange_conf, prefix, ngx_conf, ngx_signal)
     logger:info(cmd)
     return os.execute(cmd)
 end
