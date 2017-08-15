@@ -149,7 +149,7 @@ return function(config, store)
         res:render("waf")
     end)
 
-    dashboard_router:get("/waf", function(req, res, next)
+    dashboard_router:get("/dynamic-upstream", function(req, res, next)
         res:render("dynamic-upstream")
     end)
 
