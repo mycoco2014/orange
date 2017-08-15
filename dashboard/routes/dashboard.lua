@@ -149,6 +149,10 @@ return function(config, store)
         res:render("waf")
     end)
 
+    dashboard_router:get("/waf", function(req, res, next)
+        res:render("dynamic-upstream")
+    end)
+
     dashboard_router:get("/divide", function(req, res, next)
         res:render("divide")
     end)
