@@ -330,6 +330,15 @@ function _M.init_enable_of_plugin(plugin, store)
     return true
 end
 
+function _M.get_enable_from_orange_db(plugin)
+    local ok, err = orange_db.get(plugin .. ".enable")
+    if not err then
+        return ok
+    end
+    ngx.log(ngx.ERR,'get_enable_from_orange_db failed err:', err, ',plugin:',plugin)
+    return false
+end
+
 function _M.init_meta_of_plugin(plugin, store)
     local meta, err = store:query({
         sql = "select * from " .. plugin .. " where `type` = ? limit 1",
@@ -350,7 +359,57 @@ function _M.init_meta_of_plugin(plugin, store)
     else
         ngx.log(ngx.ERR, "can not find meta from storage when initializing plugin[" .. plugin .. "] local meta")
     end
+    return true
+end
 
+function _M.init_upstream_conf_of_plugin(plugin, store)
+    -- 查找data
+    local cdata_sql = "select * from " .. plugin .. " where `type` = ? "
+    local cdata_param = {"customer_data"}
+    local cdata, err = store:query({
+        sql = cdata_sql,
+        params = cdata_param
+    })
+
+    local upstream = require "ngx.upstream"
+
+    if err then
+        ngx.log(ngx.ERR, "error to find data from storage when initializing plugin[" .. plugin .. "] local customer_data, err:", err)
+        return false
+    end
+
+    local upstream_conf = {}
+    if cdata and type(cdata) == "table" and #cdata > 0 then
+        for _, v in pairs(cdata) do
+            local cur_upstream = v
+            local up_name = cur_upstream['key']
+            local up_setting = cur_upstream['value']
+
+            local db_upstream = json.decode(up_setting)
+            local primary_srvs, err1 = upstream.get_primary_peers(up_name)
+            local backup_servs, err2 = upstream.get_backup_peers(up_name)
+            if err1 or err2 then
+                ngx.log(ngx.ERR,'init upstream block failed, primary err:', err1, ',backup err:', err2)
+            else
+                -- set db to shared json
+                -- 有效的upstream才会缓存到share dict中
+                upstream_conf[up_name] = db_upstream
+            end
+        end
+        local tmp_key = plugin .. ".upstream"
+        local success, err, forcible = orange_db.set_json(plugin .. ".upstream", upstream_conf)
+        if err or not success then
+            ngx.log(ngx.ERR, "init local plugin[" .. plugin .. "] upstream error, err:", err)
+            return false
+        end
+    else
+        local success, err, forcible = orange_db.set_json(plugin .. ".upstream", {})
+        if err or not success then
+            ngx.log(ngx.ERR, "init local plugin[" .. plugin .. "] upstream error, err:", err)
+            return false
+        end
+        return false
+    end
     return true
 end
 
@@ -477,6 +536,31 @@ function _M.compose_plugin_data(store, plugin)
             data[plugin .. ".selectors"] = {}
         end
 
+        ---- add customer_data for upstream_conf plugin
+        local customers, err = store:query({
+            sql = "select * from " .. plugin .. " where `type` = ?",
+            params = {"customer_data"}
+        })
+
+        if err then
+            ngx.log(ngx.ERR, "error to find customers from storage when fetching data of plugin[" .. plugin .. "], err:", err)
+            return false
+        end
+
+        local to_update_customers = {}
+        if customers and type(customers) == "table" then
+            for _, s in ipairs(customers) do
+                -- init this customer's data local cache
+                local customer_id = s.key
+                if not customer_id then
+                    ngx.log(ngx.ERR, "error: customer_id is nil")
+                    return false
+                end
+                to_update_customers[s.key] = json.decode(s.value or "{}")
+            end
+            data[plugin .. ".customer"]= to_update_customers
+        end
+
         return true, data
     end, function()
         e = debug.traceback()
@@ -508,7 +592,24 @@ function _M.load_data_by_mysql(store, plugin)
                 ngx.log(ngx.ERR, "load data of plugin[" .. v .. "] error, init_enable:", init_enable)
                 return false
             else
-                ngx.log(ngx.ERR, "load data of plugin[" .. v .. "] success")
+                ngx.log(ngx.DEBUG, "load data of plugin[" .. v .. "] success")
+            end
+        elseif v == "upstream_conf" then
+            -- upstream conf
+            local init_enable = _M.init_enable_of_plugin(v, store)
+            -- 数据只初始化放到内存中
+            local init_data = _M.init_upstream_conf_of_plugin(v, store)
+            -- 加载数据
+            -- upstream_conf plugin
+            if init_enable and init_data then
+                if not init_data then
+                    ngx.log(ngx.ERR, "load data of plugin[" .. v .. "] error, init_enable:", init_enable,',init customer_data:',init_data)
+                    return false
+                else
+                    ngx.log(ngx.DEBUG, "load data of plugin[" .. v .. "] success")
+                end
+            else
+                ngx.log(ngx.WARN, "plugin[" .. v .. "] maybe disabled, init_enable:",init_enable)
             end
         else -- ignore `stat` and `kvstore`
             local init_enable = _M.init_enable_of_plugin(v, store)
@@ -518,7 +619,7 @@ function _M.load_data_by_mysql(store, plugin)
                 ngx.log(ngx.ERR, "load data of plugin[" .. v .. "] error, init_enable:", init_enable, " init_meta:", init_meta, " init_selectors_and_rules:", init_selectors_and_rules)
                 return false
             else
-                ngx.log(ngx.ERR, "load data of plugin[" .. v .. "] success")
+                ngx.log(ngx.DEBUG, "load data of plugin[" .. v .. "] success")
             end
         end
     end, function()

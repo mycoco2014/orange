@@ -23,9 +23,9 @@
 
                 </div>
             </div>
-            
+
             <div class="row J_mainContent">
-                            
+
 
                 <!-- content start -->
                 <div class="row content-header">
@@ -125,7 +125,7 @@
         <div id="rule-edit-area">
             <form id="add-rule-form" class="form-horizontal">
                 <div class="form-group">
-                    <label for="input-name" class="col-sm-1 control-label">名称</label>
+                    <label for="rule-name" class="col-sm-1 control-label">名称</label>
                     <div class="col-sm-11">
                         <input type="text" class="form-control" id="rule-name" placeholder="名称">
                     </div>
@@ -242,7 +242,7 @@
                 <div class="form-group handle-holder">
                     <label class="col-sm-1 control-label width-label-x">聚合ID</label>
                     <div class="col-sm-3">
-                        <input type="text" class="form-control" id="rule-handle-id" 
+                        <input type="text" class="form-control" id="rule-handle-id"
                             placeholder="" value="${r.handle.rule_id}">
                     </div>
                 </div>
@@ -277,7 +277,7 @@
                     <div class="col-sm-14" id="failed-ctrl-code" {@if r.handle.perform=="allow"} style="display:none;" {@/if} >
                         <label class="col-sm-1 control-label width-label-x">状态码</label>
                         <div class="col-sm-2 handle-code-hodler content-x">
-                            <input type="number" class="form-control" id="rule-handle-code" placeholder="error code" 
+                            <input type="number" class="form-control" id="rule-handle-code" placeholder="error code"
                                 value="${r.handle.code}">
                         </div>
                         <label class="col-sm-1 control-label">禁止</label>

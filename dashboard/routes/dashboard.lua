@@ -8,7 +8,7 @@ local lor = require("lor.index")
 
 local function load_plugin_api(plugin, dashboard_router, store)
     local plugin_api_path = "orange.plugins." .. plugin .. ".api"
-    ngx.log(ngx.ERR, "[plugin's api load], plugin_api_path:", plugin_api_path)
+    ngx.log(ngx.DEBUG, "[plugin's api load], plugin_api_path:", plugin_api_path)
 
     local ok, plugin_api, e
     ok = xpcall(function()
@@ -29,7 +29,7 @@ local function load_plugin_api(plugin, dashboard_router, store)
     end
 
     for uri, api_methods in pairs(plugin_apis) do
-        ngx.log(ngx.INFO, "load route, uri:", uri)
+        ngx.log(ngx.DEBUG, "load route, uri:", uri)
         if type(api_methods) == "table" then
             for method, func in pairs(api_methods) do
                 local m = string_lower(method)
@@ -149,8 +149,8 @@ return function(config, store)
         res:render("waf")
     end)
 
-    dashboard_router:get("/dynamic-upstream", function(req, res, next)
-        res:render("dynamic-upstream")
+    dashboard_router:get("/upstream_conf", function(req, res, next)
+        res:render("upstream_conf")
     end)
 
     dashboard_router:get("/divide", function(req, res, next)
