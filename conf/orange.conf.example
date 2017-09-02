@@ -10,7 +10,7 @@
         "key_auth",
         "signature_auth",
         "waf",
-        "upstream_conf"
+        "upstream_conf",
         "divide",
         "kvstore"
     ],
