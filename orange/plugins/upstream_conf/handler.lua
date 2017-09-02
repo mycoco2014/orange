@@ -30,7 +30,7 @@ end
 local function update_worker_uniq()
     local cur_pid = ngx.worker.pid()
     local update_key = plugin_name .. ".workersync." .. tostring(cur_pid) .. ".timestamp"
-    orange_db.set(update_key,ngx.time())
+    orange_db.set(update_key,ngx.localtime())
 end
 
 
@@ -81,11 +81,11 @@ local function update_upstream_conf()
     local unsync = orange_db.get(uniq_id)
     if not unsync then
         -- 已经同步过了
---        ngx.log(ngx.WARN,"数据已经同步---", uniq_id,',unsync:',unsync)
+        ngx.log(ngx.WARN,"数据已经同步---", uniq_id,',unsync:',unsync)
         return
     end
 
-    ngx.log(ngx.WARN,'发现 worker需要更新配置,',uniq_id)
+    ngx.log(ngx.WARN,'****发现 worker需要更新配置,',uniq_id)
 
     -- 清理已经同步的标志
     -- 避免多次同步

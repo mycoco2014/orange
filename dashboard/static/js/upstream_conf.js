@@ -18,7 +18,9 @@ new Vue(
             confChanged: false,
             pluginEnable: -1,
             editMode: 0,
-            syncWorker: []
+            syncWorker: [],
+            pid: 0,
+            showWorkerIds: false
         },
         methods:  {
             showTipDialog: function (title, content) {
@@ -71,6 +73,7 @@ new Vue(
                         this.pluginEnable = resp.body.data.enable;
                         // 插件是否在编辑模式
                         this.editMode = resp.body.data.editMode;
+                        this.pid = resp.body.data.pid;
                         var upstreams = resp.body.data['upstreams'];
                         for(var ix = 0 ; ix < upstreams.length; ix++){
                             this.upstreams.push(upstreams[ix]);
@@ -213,6 +216,15 @@ new Vue(
             },
             testClick: function(){
                 this.showErrorTip("提示", "222同步配置发生错误");
+            },
+            forceSyncWorker: function(forcePid) {
+                this.$http.post('/upstream_conf/force_sync?pid=' + forcePid.toString(),{}).then(function(resp){
+                    if(resp.body.success){
+                        this.showTipDialog("提示", "请观察进程列表同步时间");
+                    }
+                }, function (err) {
+                    this.showErrorTip("错误提示", err || "强制同步发生错误");
+                })
             },
             syncUpstreamPlugin: function(){
                 var that = this;

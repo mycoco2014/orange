@@ -30,6 +30,33 @@
         display: inline-block;
         width: 14px;
     }
+
+    .pid-ctrl{
+        display: inline-block;
+    }
+
+    .right-status-ctrl{
+        display: inline-block;
+        position: absolute;
+        right: 18px;
+    }
+
+    .sync-time-ctrl {
+        margin-left: 6px;
+    }
+
+    .worker-list{
+        padding: 2px;
+    }
+
+    .click-ctrl {
+        cursor: pointer;
+    }
+
+    .curWorker {
+        background-color: rgba(138, 206, 166, 0.65);
+    }
+
 </style>
 
 <body class="fixed-sidebar full-height-layout gray-bg">
@@ -120,24 +147,44 @@
                     <div class="col-sm-3" style="padding-right:0px;">
                         <div class="ibox">
                             <div class="ibox-content">
-                                <h4>进程同步状态</h4>
+                                <h4>进程同步状态列表</h4>
                                 <div class="selector-section-header">
-                                    <p class="small" style="float: left">
-                                        <i class="fa fa-hand-o-up">进程列表</i>
-                                    </p>
-                                </div>
-                                <ul class="sortable-list agile-list ui-sortable" v-for="item in this.syncWorker">
-                                    <li class="selector-item info-element selected-selector upstream-select-item">
-                                        <div class="upstream-block">
-                                            进程ID:<span v-text="item.pid"></span>
-                                            同步状态:<span v-if="item.status === false">已同步</span>
-                                            <span v-if="item.status !== false">未同步</span>
-                                            同步时间:<span v-text="item.timestamp"></span>
-                                            <!--<a class="edit-selector-btn pull-right btn btn-xs btn-white"-->
-                                               <!--v-on:click="getUpstreamServerList(item)">查看</a>-->
+                                    <div class="small">
+                                        <i class="fa fa-hand-o-down click-ctrl"
+                                           v-on:click="showWorkerIds=!showWorkerIds"
+                                           v-if="showWorkerIds === false">显示列表</i>
+                                        <i class="fa fa-hand-o-up click-ctrl"
+                                           v-on:click="showWorkerIds=!showWorkerIds"
+                                           v-if="showWorkerIds !== false">隐藏列表</i>
+                                        <div class="right-status-ctrl">
+                                            当前进程: <span v-text="pid"></span>
+                                            <a v-on:click="forceSyncWorker(0)">全部同步</a>
                                         </div>
-                                    </li>
-                                </ul>
+                                    </div>
+                                </div>
+                                <template v-if="showWorkerIds">
+                                    <ul class="worker-list agile-list ui-sortable" v-for="item in this.syncWorker">
+                                        <li class="selector-item info-element" v-bind:class="{'curWorker': item.pid === pid }">
+                                            <div class="selector-op">
+                                                <div class="pid-ctrl">
+                                                    进程ID:<span v-text="item.pid"></span>
+                                                </div>
+                                                <div class="right-status-ctrl">
+                                                    <span v-if="item.status === false">已同步</span>
+                                                    <span v-if="item.status !== false">未同步</span>
+                                                </div>
+
+                                            </div>
+
+                                            <div class="selector-op">
+                                                <a v-on:click="forceSyncWorker(item.pid)"
+                                                   class="delete-selector-btn pull-right btn btn-xs btn-white">强制同步</a>
+                                                <i class="fa fa-clock-o"></i>
+                                                <span class="small sync-time-ctrl" v-text="item.timestamp"></span>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </template>
                             </div>
                         </div>
                         <div class="ibox">

@@ -106,7 +106,7 @@ api:get("/upstream_conf/status", function(store)
 
         -- 获取wrker列表
         local sync_worker = {}
-        local worker_ids = upstrem_dict:get_keys(1024)
+        local worker_ids = upstrem_dict:get_keys()
         for _, worker_id in pairs(worker_ids) do
             local skey = db_plugin .. ".workersync." .. tostring(worker_id) .. '.status'
             local status = orange_db.get(skey)
@@ -115,16 +115,61 @@ api:get("/upstream_conf/status", function(store)
             local timestamp = orange_db.get(tkey)
 
             local cur_worker ={
-                pid = worker_id,
+                pid = tonumber(worker_id),
                 status = status,
                 timestamp = timestamp
             }
             table.insert(sync_worker,cur_worker)
         end
 
+        -- 返回前端,始终排序
+        table.sort(sync_worker,function(a,b)
+            return tonumber(a.pid) < tonumber(b.pid)
+        end)
+
         rst.data['syncWorker'] = sync_worker
+        rst.data['pid'] = tonumber(ngx.worker.pid())
 
         res:json(rst)
+    end
+end)
+
+
+api:post("/upstream_conf/force_sync",function(store)
+    return function(req, res, next)
+        local sync_pid = req.query.pid;
+
+        local worker_ids = {}
+        if tostring(sync_pid) ~= "0" then
+            -- 检查pid是否存在
+            local worker_id = upstrem_dict:get(sync_pid)
+            if not worker_id then
+                return res:json({
+                    success = false,
+                    msg = "pid is not exists"
+                })
+            end
+            table.insert(worker_ids,sync_pid)
+        else
+            worker_ids = upstrem_dict:get_keys()
+        end
+
+        for _, worker_id in pairs(worker_ids) do
+            local skey = db_plugin .. ".workersync." .. tostring(worker_id) .. '.status'
+            local success, err, forcible = orange_db.set(skey,true)
+            if not success or  err then
+                return res:json({
+                    success = false,
+                    msg = "failed force sharedict to nginx worker"
+                })
+            end
+        end
+
+        return res:json({
+            success = true,
+            msg = "success force sharedict to nginx worker"
+        })
+
     end
 end)
 
