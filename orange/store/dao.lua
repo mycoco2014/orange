@@ -362,6 +362,17 @@ function _M.init_meta_of_plugin(plugin, store)
     return true
 end
 
+-- 设置其他worker需要更新配置
+function _M.upstream_conf_worker_sync_status(plugin)
+    -- 告诉 worker 配置修改了
+    local upstrem_dict = ngx.shared.upstream_conf
+    local worker_ids = upstrem_dict:get_keys(1024)
+    for _, worker_id in pairs(worker_ids) do
+        local uniq_id = plugin .. ".workersync." .. tostring(worker_id) .. ".status"
+        orange_db.set(uniq_id,true)
+    end
+end
+
 function _M.init_upstream_conf_of_plugin(plugin, store)
     -- 查找data
     local cdata_sql = "select * from " .. plugin .. " where `type` = ? "
@@ -599,6 +610,15 @@ function _M.load_data_by_mysql(store, plugin)
             local init_enable = _M.init_enable_of_plugin(v, store)
             -- 数据只初始化放到内存中
             local init_data = _M.init_upstream_conf_of_plugin(v, store)
+
+            -- 检查是否启用插件
+            local enable = _M.get_enable_from_orange_db(v)
+            if enable then
+                _M.upstream_conf_worker_sync_status(v)
+            else
+                ngx.log(ngx.WARN,'upstream conf plugin is disable, sync setting to worker skipped')
+            end
+
             -- 加载数据
             -- upstream_conf plugin
             if init_enable and init_data then

@@ -16,7 +16,8 @@ new Vue(
             selectUpstream: '',
             errMessage: null,
             confChanged: false,
-            pluginEnable: 0
+            pluginEnable: -1,
+            editMode: 0
         },
         methods:  {
             showTipDialog: function (title, content) {
@@ -64,7 +65,10 @@ new Vue(
                 this.$http.get('/upstream_conf/status').then(function(resp){
                     if(resp.body.success){
                         this.upstreams.splice(0);
+                        // 插件是否启用
                         this.pluginEnable = resp.body.data.enable;
+                        // 插件是否在编辑模式
+                        this.editMode = resp.body.data.editMode;
                         var upstreams = resp.body.data['upstreams'];
                         for(var ix = 0 ; ix < upstreams.length; ix++){
                             this.upstreams.push(upstreams[ix]);
@@ -109,6 +113,14 @@ new Vue(
                 });
             },
             updateUpstreamConf: function(){
+                if(!this.pluginEnable){
+                    this.showErrorTip('错误提示', '插件未启用,禁止修改配置');
+                    return;
+                }
+                if(!this.editMode){
+                    this.showErrorTip('错误提示', '插件未启用编辑模式');
+                    return;
+                }
                 // 更新
                 // /upstream_conf/upstream
                 this.$http.post('/upstream_conf/upstream?name=' +  this.selectUpstream, this.servers).then(function(resp){
@@ -121,6 +133,42 @@ new Vue(
                     this.showErrorTip('错误提示', err || '更新upstream servers列表失败');
                 });
             },
+            startEditUpstreamConf: function () {
+                if(this.editMode === 1){
+                    this.showErrorTip('错误提示', '当前已经是编辑模式');
+                    return;
+                }
+                var data = {
+                    curEditMode: 1
+                };
+                this.$http.post('/upstream_conf/edit',data).then(function(resp){
+                    if(resp.body.success){
+                        this.editMode = 1;
+                    } else {
+                        this.showErrorTip('错误提示', '启用编辑模式失败\r\n' + resp.body.message || '');
+                    }
+                }, function(err){
+                    this.showErrorTip('错误提示', err || '启用编辑模式失败');
+                });
+            },
+            finishEditUpstreamConf: function () {
+                if(this.editMode === 0){
+                    this.showErrorTip('错误提示', '当前已经是冻结模式');
+                    return;
+                }
+                var data = {
+                    curEditMode: 0
+                };
+                this.$http.post('/upstream_conf/edit',data).then(function(resp){
+                    if(resp.body.success){
+                        this.editMode = 0;
+                    } else {
+                        this.showErrorTip('错误提示', '完成编辑模式失败\r\n' + resp.body.message || '');
+                    }
+                }, function(err){
+                    this.showErrorTip('错误提示', err || '完成编辑模式失败');
+                });
+            },
             enableUpstreamPlugin: function (enable) {
                 var data = 'enable=' + enable.toString();
                 this.$http.post('/upstream_conf/enable',data, {
@@ -129,12 +177,13 @@ new Vue(
                     }
                 }).then(function(resp){
                     if(resp.body.success){
-                        if(this.pluginEnable === 0) {
+                        if(enable === 1) {
                             this.pluginEnable = 1;
+                            this.showTipDialog('提示','启用插件成功');
                         } else {
                             this.pluginEnable = 0 ;
+                            this.showTipDialog('提示','禁用插件成功');
                         }
-                        this.showTipDialog('提示','操作成功');
                     } else {
                         this.showErrorTip('错误提示', '操作失败\r\n' + resp.body.message || '');
                     }
@@ -144,7 +193,7 @@ new Vue(
             },
 
             startSyncUpstreamPlugin: function() {
-                this.$http.post('/upstream_conf/sync').then(function(resp) {
+                this.$http.post('/upstream_conf/sync-ex').then(function(resp) {
                     if (resp.body.success) {
                         // ui 重新加载配置
                         this.showTipDialog("提示", "同步配置成功");

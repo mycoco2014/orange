@@ -7,8 +7,11 @@ local orange_db = require("orange.store.orange_db")
 local utils = require("orange.utils.utils")
 
 local api = BaseAPI:new("upstream-conf-api", 2)
+local dao = require("orange.store.dao")
 
 local store = context.store
+
+local upstrem_dict = ngx.shared.upstream_conf
 
 local upstream = require "ngx.upstream"
 local get_upstreams = upstream.get_upstreams
@@ -53,6 +56,29 @@ local function update_db_upstream_blocks(db_id , cur_block)
     return ok, err
 end
 
+
+api:post("/upstream_conf/sync", function(store)
+    return function(req, res, next)
+        local load_success = dao.load_data_by_mysql(store, db_plugin)
+        if load_success then
+            local worker_ids = upstrem_dict:get_keys(1024)
+
+            dao.upstream_conf_worker_sync_status()
+
+            return res:json({
+                success = true,
+                msg = "succeed to load config from store"
+            })
+        else
+            ngx.log(ngx.ERR, "error to load plugin[" .. db_plugin .. "] config from store")
+            return res:json({
+                success = false,
+                msg = "error to load config from store"
+            })
+        end
+    end
+end)
+
 -- 是否启用
 api:get("/upstream_conf/status", function(store)
     return function(req, res, next)
@@ -67,10 +93,17 @@ api:get("/upstream_conf/status", function(store)
         else
             rst.data['enable'] = 0
         end
+
+        -- 编辑模式
+        local editMode = orange_db.get( db_plugin .. ".editMode")
+        if editMode then
+            rst.data['editMode'] = 1
+        else
+            rst.data['editMode'] = 0
+        end
         res:json(rst)
     end
 end)
-
 
 -- 根据upstream block获取server列表信息
 api:get("/upstream_conf/upstream", function(store)
@@ -106,124 +139,37 @@ api:get("/upstream_conf/upstream", function(store)
     end
 end)
 
---
----- 更新单个 upstream
---api:post('/upstream_conf/upstream', function(store)
---    return function(req, res, next)
---        local srv_name = req.query.srv_name
---        local up_name = req.query.upstream
---        local is_backup = req.query.is_backup
---        local id = req.query.id
---        local status = req.query.status
---        if not up_name or type(up_name) ~= "string" or #up_name < 1 then
---            return res:json({
---                success = false,
---                data = "upstream name is error"
---            })
---        end
---
---        if not srv_name or type(srv_name) ~= "string" or #srv_name < 1 then
---            return res:json({
---                success = false,
---                data = "srv_name name is error"
---            })
---        end
---
---        if not( type(is_backup) == "boolean" or tostring(is_backup) == "true" or tostring(is_backup) == "false" ) then
---            return res:json({
---                success = false,
---                data = "is_backup must boolean"
---            })
---        end
---
---        if not ( (type(id) == "number" and id >= 0 ) or (tonumber(id) ~= nil and tonumber(id) >= 0 ) ) then
---            return res:json({
---                success = false,
---                data = "id must number"
---            })
---        end
---
---        if not( type(status) == "boolean" or tostring(status) == "true" or tostring(status) == "false" ) then
---            return res:json({
---                success = false,
---                data = "is_backup must boolean"
---            })
---        end
---
---        local cur_is_backup = false
---        local srvs, err
---        if tostring(is_backup) == "true" then
---            cur_is_backup = true
---            srvs, err = upstream.get_backup_peers(up_name)
---        else
---            cur_is_backup = false
---            srvs, err = upstream.get_primary_peers(up_name)
---        end
---
---        if srvs and not err then
---            local cur_srvs = {}
---            for _ , v in pairs(srvs) do
---                cur_srvs[tostring(v.id)] = v
---            end
---            if cur_srvs[tostring(id)] then
---                local peer = cur_srvs[tostring(id)]
---                if peer['name'] == srv_name then
---                    local pok, perr = upstream.set_peer_down(up_name, cur_is_backup, id, status)
---                    if pok and not perr then
---                        -- save config to database
---                        -- save config to shared
---
---                        local query_data , err = get_db_upstream_blocks(up_name)
---                        if not err and query_data and type(query_data) == "table" then
---                            peer.id = up_name
---                            peer.time = utils.now()
---                            if #query_data == 0 then
---                                -- insert
---                                local ok, err = insert_db_upstream_blocks(up_name,peer)
---                                if err then
---                                    ngx.log(ngx.ERR,'insert_db_upstream_blocks failed, err:', err,
---                                        ',upstream:',up_name,
---                                        ',peer:',json.encode(peer)
---                                    )
---                                end
---                            else
---                                local cur_id = query_data[1].id
---                                local ok, err = update_db_upstream_blocks(cur_id,peer)
---                            end
---                        end
---
---                        return res:json({
---                            success = true,
---                            data = "success"
---                        })
---                    else
---
---                        return res:json({
---                            success = false,
---                            data = "set_peer_down faield," .. ( perr or '' )
---                        })
---                    end
---                else
---                    return res:json({
---                        success = false,
---                        data = "server name not exists"
---                    })
---                end
---            else
---                return res:json({
---                    success = false,
---                    data = "server id not exists"
---                })
---            end
---        else
---            return res:json({
---                success = false,
---                data = "upsteamname not exists"
---            })
---        end
---    end
---end)
+-- 开启禁用编辑模式
+api:post('/upstream_conf/edit',function(store)
+    return function(req, res, next)
+        local editMode = req.body.curEditMode
+        if tonumber(editMode) == nil or not ( tonumber(editMode) == 0 or tonumber(editMode) == 1 ) then
+            return res:json({
+                success = false,
+                data = "editModule is error"
+            })
+        end
 
+        local editStatus = true
+        if tonumber(editMode) == 0 then
+            editStatus = false
+        end
+
+        ngx.log(ngx.ERR,'curr edit module:',editStatus)
+
+        local result, err, forcible = orange_db.set( db_plugin .. ".editMode",editStatus)
+        if not result or err then
+            return res:json({
+                success = false,
+                data = "editModule failed " .. (err or '')
+            })
+        end
+        return res:json({
+            success = true,
+            data = "success change edit mode"
+        })
+    end
+end)
 
 
 -- 批量更新
@@ -344,6 +290,7 @@ api:post('/upstream_conf/upstream',function(store)
             curl_block['id'] = up_name
             curl_block['time'] = utils.now()
 
+            -- 同时需要写到 orange db模块中
             if insert_flag then
                 -- insert
                 local ok ,err = insert_db_upstream_blocks( up_name, curl_block)
@@ -362,6 +309,14 @@ api:post('/upstream_conf/upstream',function(store)
                     ngx.log(ngx.ERR,'update upstream_conf failed! db_id:' .. tostring(db_id)  .. ',err', err)
                 end
             end
+
+            local success, err, forcible = orange_db.set_json(db_plugin .. ".upstream", curl_block)
+            if err or not success then
+                ngx.log(ngx.ERR, "update local plugin[" .. db_plugin .. "] upstream error, err:", err)
+                return false
+            end
+
+            dao.upstream_conf_worker_sync_status(db_plugin)
 
             if opt_status then
                 return res:json({

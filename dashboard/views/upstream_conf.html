@@ -25,6 +25,11 @@
     .operate-btn {
         width: 65px;
     }
+
+    .modify-width {
+        display: inline-block;
+        width: 14px;
+    }
 </style>
 
 <body class="fixed-sidebar full-height-layout gray-bg">
@@ -36,7 +41,6 @@
             <div class="row" id="stat-view" style="display: none;">
                 <div class="col-md-12">
                     <div style="height:400px;padding-top:20px;" id="stat-area"></div>
-
                 </div>
             </div>
 
@@ -48,25 +52,62 @@
                             <h4 class="head_title">Dynamic Upstream</h4>
                         </div>
                         <div class="pull-right">
-                            <a data-type="table" class="btn btn-default" rel="nofollow">
-                                <i class="fa fa-database"></i>
-                                <span>数据视图</span>
-                            </a>
 
-                            <a v-if="pluginEnable === 0" v-on:click="enableUpstreamPlugin(1)" data-on="yes" class="btn btn-info" rel="nofollow">
-                                <i class="fa fa-play"></i>
-                                <span>启用该插件</span>
-                            </a>
+                            <template v-if="pluginEnable === 0">
+                                <a data-type="table" class="btn btn-default" rel="nofollow">
+                                    <i class="fa fa-database"></i>
+                                    <span>数据视图</span>
+                                </a>
 
-                            <a v-if="pluginEnable !== 0" v-on:click="enableUpstreamPlugin(0)" data-on="yes" class="btn btn-danger" rel="nofollow">
-                                <i class="fa fa-play"></i>
-                                <span>禁用该插件</span>
-                            </a>
+                                <a v-on:click="enableUpstreamPlugin(1)" data-on="yes" class="btn btn-info" rel="nofollow">
+                                    <i class="fa fa-play"></i>
+                                    <span>启用该插件</span>
+                                </a>
 
-                            <a class="btn btn-default" v-on:click="syncUpstreamPlugin">
-                                <i class="fa fa-refresh"></i>
-                                <span>同步配置</span>
-                            </a>
+                                <a disabled="disabled" class="btn btn-danger" rel="nofollow">
+                                    <i class="fa fa-edit modify-width"></i>
+                                    <span>修改配置</span>
+                                </a>
+
+                                <a disabled="disabled" class="btn btn-default">
+                                    <i class="fa fa-refresh"></i>
+                                    <span>同步配置</span>
+                                </a>
+                            </template>
+
+
+                            <template v-if="pluginEnable !== 0">
+                                <a data-type="table" class="btn btn-default" rel="nofollow">
+                                    <i class="fa fa-database"></i>
+                                    <span>数据视图1</span>
+                                </a>
+
+                                <a v-on:click="enableUpstreamPlugin(0)" class="btn btn-danger">
+                                    <i class="fa fa-play"></i>
+                                    <span>禁用该插件</span>
+                                </a>
+
+                                <a v-if="editMode === 0" v-on:click="startEditUpstreamConf" class="btn btn-info">
+                                    <i class="fa fa-edit modify-width"></i>
+                                    <span>修改配置</span>
+                                </a>
+                                <a v-if="editMode === 1" v-on:click="finishEditUpstreamConf" class="btn btn-danger">
+                                    <i class="fa fa-lock modify-width"></i>
+                                    <span>冻结配置</span>
+                                </a>
+
+                                <a v-if="editMode === 0" disabled="disabled" class="btn btn-default">
+                                    <i class="fa fa-refresh"></i>
+                                    <span>同步配置</span>
+                                </a>
+
+                                <a v-if="editMode === 1" class="btn btn-default" v-on:click="syncUpstreamPlugin">
+                                    <i class="fa fa-refresh"></i>
+                                    <span>同步配置</span>
+                                </a>
+
+                            </template>
+
                         </div>
                     </div>
                 </div>
@@ -108,7 +149,7 @@
                                         <i class="fa fa-hand-o-up"></i> Server List
                                     </p>
                                     <div style="float:right;">
-                                        <button class="btn btn-xs" id="rule-sort-btn"
+                                        <button class="btn btn-xs"
                                                 v-bind:class="{'btn-default': !this.confChanged, 'btn-danger':this.confChanged}"
                                                 v-on:click="updateUpstreamConf">
                                             <i class="fa fa-list-ol"></i>
@@ -145,13 +186,13 @@
                                                     <td><span v-text="item.fails"></span></td>
                                                     <td><span v-text="item.max_fails"></span></td>
                                                     <td>
-                                                        <template v-if="pluginEnable == 1">
+                                                        <template v-if="pluginEnable === 1 && editMode === 1">
                                                             <input type="button" v-if=" item.down === true " class="btn btn-info operate-btn"
                                                                    v-on:click="changePeerStatus(item)" value="Up">
                                                             <input type="button" v-if=" !item.down === true " class="btn btn-danger operate-btn"
                                                                    v-on:click="changePeerStatus(item)" value="Down">
                                                         </template>
-                                                        <template v-if="pluginEnable == 0">
+                                                        <template v-if="pluginEnable === 0 || editMode === 0 ">
                                                             <span v-if=" item.down === true ">Down</span>
                                                             <span v-if=" !item.down === true ">Up</span>
                                                         </template>
@@ -170,20 +211,19 @@
                                                     <td><span v-text="item.fails"></span></td>
                                                     <td><span v-text="item.max_fails"></span></td>
                                                     <td>
-                                                        <template v-if="pluginEnable == 1">
+                                                        <template v-if="pluginEnable === 1 && editMode === 1">
                                                             <input type="button" v-if=" item.down === true " class="btn btn-info operate-btn"
                                                                     v-on:click="changePeerStatus(item)" value="Up">
                                                             <input type="button" v-if=" !item.down === true " class="btn btn-danger operate-btn"
                                                                     v-on:click="changePeerStatus(item)" value="Down">
                                                         </template>
-                                                        <template v-if="pluginEnable == 0">
+                                                        <template v-if="pluginEnable === 0 || editMode === 0">
                                                             <span v-if=" item.down === true ">Down</span>
                                                             <span v-if=" !item.down === true ">Up</span>
                                                         </template>
                                                     </td>
                                                 </tr>
                                             </template>
-
                                         </tbody>
                                     </table>
                                 </ul>
