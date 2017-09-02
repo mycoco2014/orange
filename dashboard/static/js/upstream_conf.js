@@ -17,7 +17,8 @@ new Vue(
             errMessage: null,
             confChanged: false,
             pluginEnable: -1,
-            editMode: 0
+            editMode: 0,
+            syncWorker: []
         },
         methods:  {
             showTipDialog: function (title, content) {
@@ -65,6 +66,7 @@ new Vue(
                 this.$http.get('/upstream_conf/status').then(function(resp){
                     if(resp.body.success){
                         this.upstreams.splice(0);
+                        this.syncWorker.splice(0);
                         // 插件是否启用
                         this.pluginEnable = resp.body.data.enable;
                         // 插件是否在编辑模式
@@ -72,6 +74,13 @@ new Vue(
                         var upstreams = resp.body.data['upstreams'];
                         for(var ix = 0 ; ix < upstreams.length; ix++){
                             this.upstreams.push(upstreams[ix]);
+                        }
+
+                        var syncWorker = resp.body.data['syncWorker'];
+                        if(Array.isArray(syncWorker)){
+                            for(var ix = 0 ; ix < syncWorker.length; ix++){
+                                this.syncWorker.push(syncWorker[ix]);
+                            }
                         }
                         if (this.upstreams.length > 0) {
                             this.getUpstreamServerList(this.upstreams[0]);
@@ -193,7 +202,7 @@ new Vue(
             },
 
             startSyncUpstreamPlugin: function() {
-                this.$http.post('/upstream_conf/sync-ex').then(function(resp) {
+                this.$http.post('/upstream_conf/sync').then(function(resp) {
                     if (resp.body.success) {
                         // ui 重新加载配置
                         this.showTipDialog("提示", "同步配置成功");

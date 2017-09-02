@@ -22,13 +22,13 @@ function UpstreamConfHandler:new()
 end
 
 local function get_worker_uniq()
-    local cur_pid = ngx.worker.id()
+    local cur_pid = ngx.worker.pid()
     return plugin_name .. ".workersync." .. tostring(cur_pid) .. ".status"
 end
 
 -- 更新最后同步时间
 local function update_worker_uniq()
-    local cur_pid = ngx.worker.id()
+    local cur_pid = ngx.worker.pid()
     local update_key = plugin_name .. ".workersync." .. tostring(cur_pid) .. ".timestamp"
     orange_db.set(update_key,ngx.time())
 end
@@ -38,7 +38,7 @@ end
 local function init_worker_list()
     -- worker id 需要写入 列表
     -- 以及清理worker
-    local worker_id = ngx.worker.id()
+    local worker_id = ngx.worker.pid()
     -- 设置进程id
     ngx.log(ngx.WARN,"add worker id to dict:", worker_id)
     upstrem_dict:set(tostring(worker_id),"1")
@@ -48,7 +48,7 @@ end
 local function checker_worker_list()
     -- worker id 需要写入 列表
     -- 以及清理worker
-    local worker_id = ngx.worker.id()
+    local worker_id = ngx.worker.pid()
     -- 设置进程id
     local ret = upstrem_dict:get(tostring(worker_id))
     if not ret then
@@ -59,18 +59,18 @@ end
 
 
 local function update_upstream_conf()
-    local worker_id = ngx.worker.id()
+    local worker_id = ngx.worker.pid()
     local enable = orange_db.get( plugin_name .. ".enable")
     if not enable then
         -- 插件未启用,不同步
-        ngx.log(ngx.WARN,"插件未启用:", worker_id)
+--        ngx.log(ngx.WARN,"插件未启用:", worker_id)
         return
     end
 
     local editMode = orange_db.get( plugin_name .. ".editMode")
     if editMode then
         -- 当前为编辑模式,禁止从sharedict同步修改nginx进程配置
-        ngx.log(ngx.WARN,"当前为编辑模式,不同步数据:", worker_id)
+--        ngx.log(ngx.WARN,"当前为编辑模式,不同步数据:", worker_id)
         return
     end
 
@@ -81,7 +81,7 @@ local function update_upstream_conf()
     local unsync = orange_db.get(uniq_id)
     if not unsync then
         -- 已经同步过了
-        ngx.log(ngx.WARN,"数据已经同步---", uniq_id,',unsync:',unsync)
+--        ngx.log(ngx.WARN,"数据已经同步---", uniq_id,',unsync:',unsync)
         return
     end
 
@@ -93,7 +93,7 @@ local function update_upstream_conf()
 
     local up_conf = orange_db.get_json(plugin_name .. ".upstream")
 
-    ngx.log(ngx.WARN,'test1,', type(up_conf))
+--    ngx.log(ngx.WARN,'test1,', type(up_conf))
 
     if up_conf and type(up_conf) == "table" then
         for key, db_upstream in pairs(up_conf) do

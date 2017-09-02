@@ -115,14 +115,34 @@
                 {(common/data-view-part.html)}
                 <!--{(common/right-selector-rule-part.html)}-->
 
-                ${ message }
-
                 <div class="row" id="table-view">
+
                     <div class="col-sm-3" style="padding-right:0px;">
+                        <div class="ibox">
+                            <div class="ibox-content">
+                                <h4>进程同步状态</h4>
+                                <div class="selector-section-header">
+                                    <p class="small" style="float: left">
+                                        <i class="fa fa-hand-o-up">进程列表</i>
+                                    </p>
+                                </div>
+                                <ul class="sortable-list agile-list ui-sortable" v-for="item in this.syncWorker">
+                                    <li class="selector-item info-element selected-selector upstream-select-item">
+                                        <div class="upstream-block">
+                                            进程ID:<span v-text="item.pid"></span>
+                                            同步状态:<span v-if="item.status === false">已同步</span>
+                                            <span v-if="item.status !== false">未同步</span>
+                                            同步时间:<span v-text="item.timestamp"></span>
+                                            <!--<a class="edit-selector-btn pull-right btn btn-xs btn-white"-->
+                                               <!--v-on:click="getUpstreamServerList(item)">查看</a>-->
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
                         <div class="ibox">
                             <div class="ibox-content" id="selector-section">
                                 <h4>Upstream Block</h4>
-
                                 <div class="selector-section-header">
                                     <p class="small" style="float: left">
                                         <i class="fa fa-hand-o-up">选中查看详情</i>
@@ -155,7 +175,6 @@
                                             <i class="fa fa-list-ol"></i>
                                             <span>保存配置</span>
                                         </button>
-                                        <button v-on:click="testClick">Test</button>
                                     </div>
                                 </div>
 

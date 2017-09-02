@@ -56,28 +56,30 @@ local function update_db_upstream_blocks(db_id , cur_block)
     return ok, err
 end
 
+--
+--api:post("/upstream_conf/sync", function(store)
+--    return function(req, res, next)
+--        local load_success = dao.load_data_by_mysql(store, db_plugin)
+--        if load_success then
+--            local worker_ids = upstrem_dict:get_keys(1024)
+--
+--            dao.upstream_conf_worker_sync_status()
+--
+--            return res:json({
+--                success = true,
+--                msg = "succeed to load config from store"
+--            })
+--        else
+--            ngx.log(ngx.ERR, "error to load plugin[" .. db_plugin .. "] config from store")
+--            return res:json({
+--                success = false,
+--                msg = "error to load config from store"
+--            })
+--        end
+--    end
+--end)
 
-api:post("/upstream_conf/sync", function(store)
-    return function(req, res, next)
-        local load_success = dao.load_data_by_mysql(store, db_plugin)
-        if load_success then
-            local worker_ids = upstrem_dict:get_keys(1024)
 
-            dao.upstream_conf_worker_sync_status()
-
-            return res:json({
-                success = true,
-                msg = "succeed to load config from store"
-            })
-        else
-            ngx.log(ngx.ERR, "error to load plugin[" .. db_plugin .. "] config from store")
-            return res:json({
-                success = false,
-                msg = "error to load config from store"
-            })
-        end
-    end
-end)
 
 -- 是否启用
 api:get("/upstream_conf/status", function(store)
@@ -101,6 +103,27 @@ api:get("/upstream_conf/status", function(store)
         else
             rst.data['editMode'] = 0
         end
+
+        -- 获取wrker列表
+        local sync_worker = {}
+        local worker_ids = upstrem_dict:get_keys(1024)
+        for _, worker_id in pairs(worker_ids) do
+            local skey = db_plugin .. ".workersync." .. tostring(worker_id) .. '.status'
+            local status = orange_db.get(skey)
+
+            local tkey = db_plugin .. ".workersync." .. tostring(worker_id) .. '.timestamp'
+            local timestamp = orange_db.get(tkey)
+
+            local cur_worker ={
+                pid = worker_id,
+                status = status,
+                timestamp = timestamp
+            }
+            table.insert(sync_worker,cur_worker)
+        end
+
+        rst.data['syncWorker'] = sync_worker
+
         res:json(rst)
     end
 end)
