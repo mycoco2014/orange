@@ -81,7 +81,7 @@ local function update_upstream_conf()
     local unsync = orange_db.get(uniq_id)
     if not unsync then
         -- 已经同步过了
-        ngx.log(ngx.WARN,"数据已经同步---", uniq_id,',unsync:',unsync)
+--        ngx.log(ngx.WARN,"数据已经同步---", uniq_id,',unsync:',unsync)
         return
     end
 
