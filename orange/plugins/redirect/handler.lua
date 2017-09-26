@@ -32,10 +32,15 @@ local function filter_rules(sid, plugin, ngx_var_uri, ngx_var_host, ngx_var_sche
                 if handle and handle.url_tmpl then
                     if handle.url_tmpl then
                         if string_find(handle.url_tmpl, '{{uri') then
-                            ngx.log(ngx.WARN,'find uri template var')
                             if not variables['uri'] then
                                 -- url 配置了, 但是未取到
-                                ngx.log(ngx.ERR,'find uri template var but not match uri, 请配置uri 匹配!!!')
+                                ngx.log(ngx.ERR,'find uri template var but not match uri, 请配置 uri 匹配!!!')
+                                check_err = true
+                            end
+                        elseif string_find(handle.url_tmpl, '{{query') then
+                            if not variables['query'] then
+                                -- url 配置了, 但是未取到
+                                ngx.log(ngx.ERR,'find query var but not match query, 请配置 query 匹配!!!')
                                 check_err = true
                             end
                         end
