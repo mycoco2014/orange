@@ -20,20 +20,30 @@ Orange是一个基于OpenResty的API网关。除Nginx的基本功能外，它还
     - Orange的监控插件需要统计http的某些状态数据，所以需要编译OpenResty时添加`--with-http_stub_status_module`
     - 由于使用了*_block指令，所以OpenResty的版本最好在1.9.7.3以上.
     - 以下为 centos
-    -  `yum install hg -y`
+    -  `yum clean all`
+    -  `yum makecache`
+    -  `yum install unix2dos patch hg -y`
     -  `yum install gcc -y`
-    -  `yum install pcre pcre-devel -y`
+    -  `yum install pcre pcre-devel perl -y`
     -  `yum install openssl openssl-devel -y`
+    
+    -  如果出现 Can't locate Data/Dumper.pm in @INC (@INC contains
+    -  `yum install 'perl(Data::Dumper)'`
+    
     -  然后在在 /path/to/openresty-1.11.2.3 目录里面进行make
     -      `会自动下载其它nginx依赖的包,以及会调整当前目录下[openresty-1.11.2.3]`
     -  cd openresty-1.11.2.3
-    -  configure --with-http_stub_status_module
+    -  ./configure --with-http_stub_status_module
     -  然后sudo make && make install 
     -   `ln -s /usr/local/openresty/bin/openresty /usr/bin/openresty`
     -   `ln -s /usr/local/openresty/bin/resty /usr/bin/resty`
 - [lor](https://github.com/sumory/lor)框架
     - 若使用的Orange版本低于v0.6.2则应安装lor v0.2.*版本
     - 若使用的Orange版本高于或等于v0.6.2则应安装lor v0.3.0+版本
+    - busted http://olivinelabs.com/busted
+    - wget https://luarocks.org/releases/luarocks-2.4.1.tar.gz
+    
+    
 - lua-resty-template (https://github.com/bungle/lua-resty-template.git)
     - 依赖模板库
     - 需要将lua-resty-template/lib/resty/ 复制到安装好的 openresty 的目录
@@ -45,10 +55,6 @@ Orange是一个基于OpenResty的API网关。除Nginx的基本功能外，它还
 - orange start 
     - 默认启动的是nginx,如果本机已经安装了nginx则会出问题,找不到lua_package_path指令
     - vim /usr/local/orange/bin/utils/ngx_handle.lua
-    - 在31行默认的为
-    ```local cmd = string.format("%snginx %s %s %s", orange_conf, prefix, ngx_conf, ngx_signal)```
-    - 修改为
-    ```local cmd = string.format("%sopenresty %s %s %s", orange_conf, prefix, ngx_conf, ngx_signal)```
     - 注意安装完openresty需要做ln -s链接,不然找不到
 
 #### 数据表导入MySQL
