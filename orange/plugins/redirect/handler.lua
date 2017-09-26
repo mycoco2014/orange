@@ -119,7 +119,7 @@ function RedirectHandler:redirect()
     local ngx_var_args = ngx_var.args
 
     for i, sid in ipairs(ordered_selectors) do
-        ngx.log(ngx.INFO, "==[Redirect][PASS THROUGH SELECTOR:", sid, "]")
+--        ngx.log(ngx.INFO, "==[Redirect][PASS THROUGH SELECTOR:", sid, "]")
         local selector = selectors[sid]
         if selector and selector.enable == true then
             local selector_pass
